@@ -92,8 +92,58 @@ Vue.use(RecycleList)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  router,
-  render: h => h(App)
-})
+const renderApp = () => {
+  const app = new Vue({
+      el: '#app',
+      router,
+      render: h => h(App)
+  });
+};
+new Promise (resolve =>{
+  function check () {
+    if (
+      window.innerWidth &&
+      window.innerHeight &&
+      screen.availWidth &&
+      screen.availHeight
+    ) {
+      resolve ();
+    } else {
+      setTimeout (check, 10);
+    }
+  }
+  if (
+    ['complete', 'loaded', 'interactive'].includes (document.readyState) &&
+    document.body
+  ) {
+    check ();
+  } else {
+    document.addEventListener ('DOMContentLoaded', check, false);
+  }
+}).then (() => {
+  //解决promise axios请求，finally不执行的问题
+  Promise.prototype.finally = function (callback) {
+    let P = this.constructor;
+    return this.then (
+      value => P.resolve (callback ()).then (() => value),
+      reason =>
+        P.resolve (callback ()).then (() => {
+          throw reason;
+        })
+    );
+  };
+  (function(doc,win){
+    const docElement = doc.documentElement;
+    function callback(){
+      let clientWidth = docElement.clientWidth;
+      clientWidth = clientWidth / 10; // 设置 rem 为宽度的十分之一
+      docElement.style.fontSize = clientWidth + 'px';
+    }
+    
+    const event = 'orientationchange' in win ? 'orientationChange' : 'resize';
+
+    doc.addEventListener('DOMContentLoaded',callback);
+    win.addEventListener(event,callback);
+  })(document,window);
+  renderApp();
+});
